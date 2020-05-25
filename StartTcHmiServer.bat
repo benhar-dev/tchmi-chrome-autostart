@@ -21,6 +21,12 @@ SETLOCAL
 
 REM -- Default Configuration --------------------------------------------------
 
+SET server="C:\TwinCAT\Functions\TF2000-HMI-Server\TcHmiSrv.exe"
+SET serverParams="--extensionDir=""all=C:\TwinCAT\Functions\TF2000-HMI-Server"""
+SET serverWorkingDirectory="C:\ProgramData\Beckhoff\TF2000 TwinCAT 3 HMI Server"
+SET clearHistorize=n
+SET historizeDb="historize.db"
+SET historizeDbJournal="historize.db-journal"
 SET ip=127.0.0.1
 SET port=1010
 SET application="C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
@@ -29,13 +35,27 @@ SET restart=n
 
 REM -- Code -------------------------------------------------------------------
 
+   cd %serverWorkingDirectory% 
+
 :next-argument
 
-   IF [%1] == [] GOTO listen
+   IF [%1] == [] GOTO clearHistorize
       SET  %1
    SHIFT
 
    GOTO next-argument
+
+:clearHistorize
+
+   IF [%clearHistorize%] == [n] GOTO startup
+   echo Cleaning Historize DB
+   DEL /Q %historizeDb%
+   DEL /Q %historizeDbJournal%
+
+:startup
+
+   echo Starting Server
+   start "" %server% %serverParams%
 
 :listen
 
@@ -46,7 +66,7 @@ REM -- Code -------------------------------------------------------------------
    netstat -an | find "%ip%:%port%" | find "LISTENING" | find "0.0.0.0" >nul 2>nul && (
       echo  Server listening on port %port%.
       echo  Starting %application% %arguments%
-      
+
       %application% %arguments%
    ) || (
       goto retry
